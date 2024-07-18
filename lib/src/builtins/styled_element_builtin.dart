@@ -83,8 +83,7 @@ class StyledElementBuiltIn extends HtmlExtension {
       };
 
   @override
-  StyledElement prepare(
-      ExtensionContext context, List<StyledElement> children) {
+  StyledElement prepare(ExtensionContext context, List<StyledElement> children) {
     StyledElement styledElement = StyledElement(
       name: context.elementName,
       elementId: context.id,
@@ -121,10 +120,7 @@ class StyledElementBuiltIn extends HtmlExtension {
         );
         break;
       case "bdo":
-        TextDirection textDirection =
-            ((context.attributes["dir"] ?? "ltr") == "rtl")
-                ? TextDirection.rtl
-                : TextDirection.ltr;
+        TextDirection textDirection = ((context.attributes["dir"] ?? "ltr") == "rtl") ? TextDirection.rtl : TextDirection.ltr;
         styledElement.style = Style(
           direction: textDirection,
         );
@@ -217,15 +213,11 @@ class StyledElementBuiltIn extends HtmlExtension {
         styledElement.style = Style(
           color: context.attributes['color'] != null
               ? context.attributes['color']!.startsWith("#")
-                  ? ExpressionMapping.stringToColor(
-                      context.attributes['color']!)
-                  : ExpressionMapping.namedColorToColor(
-                      context.attributes['color']!)
+                  ? ExpressionMapping.stringToColor(context.attributes['color']!)
+                  : ExpressionMapping.namedColorToColor(context.attributes['color']!)
               : null,
           fontFamily: context.attributes['face']?.split(",").first,
-          fontSize: context.attributes['size'] != null
-              ? numberToFontSize(context.attributes['size']!)
-              : null,
+          fontSize: context.attributes['size'] != null ? numberToFontSize(context.attributes['size']!) : null,
         );
         break;
       case "h1":
@@ -428,10 +420,7 @@ class StyledElementBuiltIn extends HtmlExtension {
   @override
   InlineSpan build(ExtensionContext context) {
     if (context.styledElement!.style.display == Display.listItem ||
-        ((context.styledElement!.style.display == Display.block ||
-                context.styledElement!.style.display == Display.inlineBlock) &&
-            (context.styledElement!.children.isNotEmpty ||
-                context.elementName == "hr"))) {
+        ((context.styledElement!.style.display == Display.block || context.styledElement!.style.display == Display.inlineBlock) && (context.styledElement!.children.isNotEmpty || context.elementName == "hr"))) {
       return WidgetSpan(
         alignment: PlaceholderAlignment.baseline,
         baseline: TextBaseline.alphabetic,
@@ -439,20 +428,19 @@ class StyledElementBuiltIn extends HtmlExtension {
           key: AnchorKey.of(context.parser.key, context.styledElement),
           style: context.styledElement!.style,
           shrinkWrap: context.parser.shrinkWrap,
-          childIsReplaced: ["iframe", "img", "video", "audio"]
-              .contains(context.styledElement!.name),
-          children: context.builtChildrenMap!.entries
-              .expandIndexed((i, child) => [
-                    child.value,
-                    if (context.parser.shrinkWrap &&
-                        i != context.styledElement!.children.length - 1 &&
-                        (child.key.style.display == Display.block ||
-                            child.key.style.display == Display.listItem) &&
-                        child.key.element?.localName != "html" &&
-                        child.key.element?.localName != "body")
-                      const TextSpan(text: "\n", style: TextStyle(fontSize: 0)),
-                  ])
-              .toList(),
+          childIsReplaced: ["iframe", "img", "video", "audio"].contains(context.styledElement!.name),
+          children: context.builtChildrenMap!.entries.expandIndexed((i, child) {
+            return [
+              if (context.attributes['style'] != null && '${context.attributes['style']}'.contains('text-indent')) const WidgetSpan(child: SizedBox(width: 30)),
+              child.value,
+              if (context.parser.shrinkWrap &&
+                  i != context.styledElement!.children.length - 1 &&
+                  (child.key.style.display == Display.block || child.key.style.display == Display.listItem) &&
+                  child.key.element?.localName != "html" &&
+                  child.key.element?.localName != "body")
+                const TextSpan(text: "\n", style: TextStyle(fontSize: 0)),
+            ];
+          }).toList(),
         ),
       );
     }
@@ -460,7 +448,9 @@ class StyledElementBuiltIn extends HtmlExtension {
     return TextSpan(
       style: context.styledElement!.style.generateTextStyle(),
       children: context.builtChildrenMap!.entries
-          .expandIndexed((index, child) => [
+          .expandIndexed((index, child){
+            return [
+              if (context.attributes['style'] != null && '${context.attributes['style']}'.contains('text-indent')) const WidgetSpan(child: SizedBox(width: 30)),
                 child.value,
                 if (context.parser.shrinkWrap &&
                     child.key.style.display == Display.block &&
@@ -470,7 +460,8 @@ class StyledElementBuiltIn extends HtmlExtension {
                     child.key.element?.localName != "html" &&
                     child.key.element?.localName != "body")
                   const TextSpan(text: "\n", style: TextStyle(fontSize: 0)),
-              ])
+              ];
+          })
           .toList(),
     );
   }
