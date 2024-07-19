@@ -421,6 +421,21 @@ class StyledElementBuiltIn extends HtmlExtension {
   InlineSpan build(ExtensionContext context) {
     if (context.styledElement!.style.display == Display.listItem ||
         ((context.styledElement!.style.display == Display.block || context.styledElement!.style.display == Display.inlineBlock) && (context.styledElement!.children.isNotEmpty || context.elementName == "hr"))) {
+      List<InlineSpan> children = context.builtChildrenMap!.entries.expandIndexed((i, child) {
+        return [
+          child.value,
+          if (context.parser.shrinkWrap &&
+              i != context.styledElement!.children.length - 1 &&
+              (child.key.style.display == Display.block || child.key.style.display == Display.listItem) &&
+              child.key.element?.localName != "html" &&
+              child.key.element?.localName != "body")
+            const TextSpan(text: "\n", style: TextStyle(fontSize: 0)),
+        ];
+      }).toList();
+
+      if (context.attributes['style'] != null && '${context.attributes['style']}'.contains('text-indent')) {
+        children.insert(0, const WidgetSpan(child: SizedBox(width: 30)));
+      }
       return WidgetSpan(
         alignment: PlaceholderAlignment.baseline,
         baseline: TextBaseline.alphabetic,
@@ -429,40 +444,27 @@ class StyledElementBuiltIn extends HtmlExtension {
           style: context.styledElement!.style,
           shrinkWrap: context.parser.shrinkWrap,
           childIsReplaced: ["iframe", "img", "video", "audio"].contains(context.styledElement!.name),
-          children: context.builtChildrenMap!.entries.expandIndexed((i, child) {
-            return [
-              if (context.attributes['style'] != null && '${context.attributes['style']}'.contains('text-indent')) const WidgetSpan(child: SizedBox(width: 30)),
-              child.value,
-              if (context.parser.shrinkWrap &&
-                  i != context.styledElement!.children.length - 1 &&
-                  (child.key.style.display == Display.block || child.key.style.display == Display.listItem) &&
-                  child.key.element?.localName != "html" &&
-                  child.key.element?.localName != "body")
-                const TextSpan(text: "\n", style: TextStyle(fontSize: 0)),
-            ];
-          }).toList(),
+          children: children,
         ),
       );
     }
 
     return TextSpan(
       style: context.styledElement!.style.generateTextStyle(),
-      children: context.builtChildrenMap!.entries
-          .expandIndexed((index, child){
-            return [
-              if (context.attributes['style'] != null && '${context.attributes['style']}'.contains('text-indent')) const WidgetSpan(child: SizedBox(width: 30)),
-                child.value,
-                if (context.parser.shrinkWrap &&
-                    child.key.style.display == Display.block &&
-                    index != context.styledElement!.children.length - 1 &&
-                    child.key.element?.parent?.localName != "th" &&
-                    child.key.element?.parent?.localName != "td" &&
-                    child.key.element?.localName != "html" &&
-                    child.key.element?.localName != "body")
-                  const TextSpan(text: "\n", style: TextStyle(fontSize: 0)),
-              ];
-          })
-          .toList(),
+      children: context.builtChildrenMap!.entries.expandIndexed((index, child) {
+        return [
+          if (context.attributes['style'] != null && '${context.attributes['style']}'.contains('text-indent')) const WidgetSpan(child: SizedBox(width: 30)),
+          child.value,
+          if (context.parser.shrinkWrap &&
+              child.key.style.display == Display.block &&
+              index != context.styledElement!.children.length - 1 &&
+              child.key.element?.parent?.localName != "th" &&
+              child.key.element?.parent?.localName != "td" &&
+              child.key.element?.localName != "html" &&
+              child.key.element?.localName != "body")
+            const TextSpan(text: "\n", style: TextStyle(fontSize: 0)),
+        ];
+      }).toList(),
     );
   }
 }

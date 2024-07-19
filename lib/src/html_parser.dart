@@ -54,8 +54,7 @@ class HtmlParser extends StatefulWidget {
     required this.doNotRenderTheseTags,
     required this.onlyRenderTheseTags,
     this.root,
-  }) : internalOnAnchorTap = onAnchorTap ??
-            (key != null ? _handleAnchorTap(key, onLinkTap) : onLinkTap);
+  }) : internalOnAnchorTap = onAnchorTap ?? (key != null ? _handleAnchorTap(key, onLinkTap) : onLinkTap);
 
   @override
   State<HtmlParser> createState() => _HtmlParserState();
@@ -80,11 +79,9 @@ class HtmlParser extends StatefulWidget {
     return css_parser.parse(data);
   }
 
-  static OnTap _handleAnchorTap(Key key, OnTap? onLinkTap) =>
-      (String? url, Map<String, String> attributes, html.Element? element) {
+  static OnTap _handleAnchorTap(Key key, OnTap? onLinkTap) => (String? url, Map<String, String> attributes, html.Element? element) {
         if (url?.startsWith("#") == true) {
-          final anchorContext =
-              AnchorKey.forId(key, url!.substring(1))?.currentContext;
+          final anchorContext = AnchorKey.forId(key, url!.substring(1))?.currentContext;
           if (anchorContext != null) {
             Scrollable.ensureVisible(anchorContext);
           }
@@ -103,16 +100,14 @@ class HtmlParser extends StatefulWidget {
   }) {
     // Loop through every extension and see if it can handle this node
     for (final extension in extensions) {
-      if (!extensionsToIgnore.contains(extension) &&
-          extension.matches(extensionContext)) {
+      if (!extensionsToIgnore.contains(extension) && extension.matches(extensionContext)) {
         return extension.prepare(extensionContext, children);
       }
     }
 
     // Loop through built in elements and see if they can handle this node.
     for (final builtIn in builtIns) {
-      if (!extensionsToIgnore.contains(builtIn) &&
-          builtIn.matches(extensionContext)) {
+      if (!extensionsToIgnore.contains(builtIn) && builtIn.matches(extensionContext)) {
         return builtIn.prepare(extensionContext, children);
       }
     }
@@ -130,16 +125,14 @@ class HtmlParser extends StatefulWidget {
   }) {
     // Loop through every extension and see if it can handle this node
     for (final extension in extensions) {
-      if (!extensionsToIgnore.contains(extension) &&
-          extension.matches(extensionContext)) {
+      if (!extensionsToIgnore.contains(extension) && extension.matches(extensionContext)) {
         return extension.build(extensionContext);
       }
     }
 
     // Loop through built in elements and see if they can handle this node.
     for (final builtIn in builtIns) {
-      if (!extensionsToIgnore.contains(builtIn) &&
-          builtIn.matches(extensionContext)) {
+      if (!extensionsToIgnore.contains(builtIn) && builtIn.matches(extensionContext)) {
         return builtIn.build(extensionContext);
       }
     }
@@ -198,8 +191,7 @@ class _HtmlParserState extends State<HtmlParser> {
       name: '[Tree Root]',
       children: [],
       node: widget.htmlData,
-      style: Style.fromTextStyle(DefaultTextStyle.of(context)
-          .style), //TODO this was Theme.of(context).textTheme.bodyText2!. Compare.
+      style: Style.fromTextStyle(DefaultTextStyle.of(context).style), //TODO this was Theme.of(context).textTheme.bodyText2!. Compare.
     );
 
     for (var node in widget.htmlData.nodes) {
@@ -213,13 +205,11 @@ class _HtmlParserState extends State<HtmlParser> {
       return false;
     }
 
-    if (widget.doNotRenderTheseTags != null &&
-        widget.doNotRenderTheseTags!.contains(context.elementName)) {
+    if (widget.doNotRenderTheseTags != null && widget.doNotRenderTheseTags!.contains(context.elementName)) {
       return true;
     }
 
-    if (widget.onlyRenderTheseTags != null &&
-        !widget.onlyRenderTheseTags!.contains(context.elementName)) {
+    if (widget.onlyRenderTheseTags != null && !widget.onlyRenderTheseTags!.contains(context.elementName)) {
       return true;
     }
 
@@ -284,12 +274,8 @@ class _HtmlParserState extends State<HtmlParser> {
   /// [styleTree] takes the lexed [StyleElement] tree and applies external,
   /// inline, and custom CSS/Flutter styles, and then cascades the styles down the tree.
   void styleTree() {
-    final styleTagContents = widget.htmlData
-        .getElementsByTagName("style")
-        .map((e) => e.innerHtml)
-        .join();
-    final styleTagDeclarations =
-        parseExternalCss(styleTagContents, widget.onCssParseError);
+    final styleTagContents = widget.htmlData.getElementsByTagName("style").map((e) => e.innerHtml).join();
+    final styleTagDeclarations = parseExternalCss(styleTagContents, widget.onCssParseError);
 
     _styleTreeRecursive(tree, styleTagDeclarations);
   }
@@ -305,8 +291,7 @@ class _HtmlParserState extends State<HtmlParser> {
 
     // Apply inline styles
     if (tree.attributes.containsKey("style")) {
-      final newStyle =
-          inlineCssToStyle(tree.attributes['style'], widget.onCssParseError);
+      final newStyle = inlineCssToStyle(tree.attributes['style'], widget.onCssParseError);
       if (newStyle != null) {
         tree.style = tree.style.merge(newStyle);
       }
