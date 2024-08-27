@@ -46,14 +46,11 @@ class ImageBuiltIn extends HtmlExtension {
       return false;
     }
 
-    return (_matchesNetworkImage(context) && handleNetworkImages) ||
-        (_matchesAssetImage(context) && handleAssetImages) ||
-        (_matchesBase64Image(context) && handleDataImages);
+    return (_matchesNetworkImage(context) && handleNetworkImages) || (_matchesAssetImage(context) && handleAssetImages) || (_matchesBase64Image(context) && handleDataImages);
   }
 
   @override
-  StyledElement prepare(
-      ExtensionContext context, List<StyledElement> children) {
+  StyledElement prepare(ExtensionContext context, List<StyledElement> children) {
     final parsedWidth = double.tryParse(context.attributes["width"] ?? "");
     final parsedHeight = double.tryParse(context.attributes["height"] ?? "");
 
@@ -74,10 +71,14 @@ class ImageBuiltIn extends HtmlExtension {
   InlineSpan build(ExtensionContext context) {
     final element = context.styledElement as ImageElement;
 
-    final imageStyle = Style(
+    Style imageStyle = Style(
       width: element.width,
       height: element.height,
     ).merge(context.styledElement!.style);
+    Width? width = imageStyle.width;
+    if (width != null && width.value <= 0) {
+      imageStyle.width = null;
+    }
 
     late Widget child;
     if (_matchesBase64Image(context)) {
@@ -101,8 +102,7 @@ class ImageBuiltIn extends HtmlExtension {
     );
   }
 
-  static RegExp get dataUriFormat => RegExp(
-      r"^(?<scheme>data):(?<mime>image/[\w+\-.]+);*(?<encoding>base64)?,\s*(?<data>.*)");
+  static RegExp get dataUriFormat => RegExp(r"^(?<scheme>data):(?<mime>image/[\w+\-.]+);*(?<encoding>base64)?,\s*(?<data>.*)");
 
   bool _matchesBase64Image(ExtensionContext context) {
     final attributes = context.attributes;
@@ -113,24 +113,13 @@ class ImageBuiltIn extends HtmlExtension {
 
     final dataUri = dataUriFormat.firstMatch(attributes['src']!);
 
-    return context.elementName == "img" &&
-        dataUri != null &&
-        (mimeTypes == null ||
-            mimeTypes!.contains(dataUri.namedGroup('mime'))) &&
-        dataUri.namedGroup('mime') != 'image/svg+xml' &&
-        (dataEncoding == null ||
-            dataUri.namedGroup('encoding') == dataEncoding);
+    return context.elementName == "img" && dataUri != null && (mimeTypes == null || mimeTypes!.contains(dataUri.namedGroup('mime'))) && dataUri.namedGroup('mime') != 'image/svg+xml' && (dataEncoding == null || dataUri.namedGroup('encoding') == dataEncoding);
   }
 
   bool _matchesAssetImage(ExtensionContext context) {
     final attributes = context.attributes;
 
-    return context.elementName == "img" &&
-        attributes['src'] != null &&
-        !attributes['src']!.endsWith(".svg") &&
-        attributes['src']!.startsWith(assetSchema) &&
-        (fileExtensions == null ||
-            attributes['src']!.endsWithAnyFileExtension(fileExtensions!));
+    return context.elementName == "img" && attributes['src'] != null && !attributes['src']!.endsWith(".svg") && attributes['src']!.startsWith(assetSchema) && (fileExtensions == null || attributes['src']!.endsWithAnyFileExtension(fileExtensions!));
   }
 
   bool _matchesNetworkImage(ExtensionContext context) {
@@ -145,12 +134,7 @@ class ImageBuiltIn extends HtmlExtension {
       return false;
     }
 
-    return context.elementName == "img" &&
-        networkSchemas.contains(src.scheme) &&
-        !src.path.endsWith(".svg") &&
-        (networkDomains == null || networkDomains!.contains(src.host)) &&
-        (fileExtensions == null ||
-            src.path.endsWithAnyFileExtension(fileExtensions!));
+    return context.elementName == "img" && networkSchemas.contains(src.scheme) && !src.path.endsWith(".svg") && (networkDomains == null || networkDomains!.contains(src.host)) && (fileExtensions == null || src.path.endsWithAnyFileExtension(fileExtensions!));
   }
 
   Widget _base64ImageRender(ExtensionContext context, Style imageStyle) {
@@ -194,14 +178,22 @@ class ImageBuiltIn extends HtmlExtension {
   Widget _networkImageRender(ExtensionContext context, Style imageStyle) {
     final element = context.styledElement as ImageElement;
 
+    double? width = imageStyle.width?.value;
+    double? height = imageStyle.height?.value;
+    if (height != null && height <= 0) {
+      height = null;
+    }
+    if (width != null && width <= 0) {
+      width = null;
+    }
     return CssBoxWidget(
       style: imageStyle,
       childIsReplaced: true,
       child: Image.network(
         element.src,
-        width: imageStyle.width?.value,
-        height: imageStyle.height?.value,
-        fit: BoxFit.fill,
+        width: width,
+        height: height,
+        fit: BoxFit.fitWidth,
         headers: networkHeaders,
         errorBuilder: (ctx, error, stackTrace) {
           return Text(
